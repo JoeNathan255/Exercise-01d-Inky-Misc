@@ -1,5 +1,5 @@
 # Exercise-01d-Inky-Misc
 
-# Your Name
+# Jonathan Staten
 
-# Your Github username
+# JoeNathan255
