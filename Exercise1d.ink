@@ -15,9 +15,9 @@ VAR time = 0
     ->->
 
 /* This tunneling knot is for exercise 01d; it's just a way of making the function-based time implementation feel more in line with the style of this game & its codebase (and avoid repetitive code) */
-== progress_time ==
+== advance_time ==
     ~ time ++
-    {time > 3:
+    {time > 3: // i know, magic number :(
         ~ time = 0
     }
     ->->
@@ -29,7 +29,7 @@ VAR time = 0
             - 3:    <> {~ The sunrise shines on the canyon's western wall.|⠀}
             - else: you broke something :(
         }
-        -> progress_time ->
+        -> advance_time ->
         ->->
 
 
@@ -45,22 +45,22 @@ VAR time = 0
 == entrance ==
     {You lay at the bottom of a chasm|The chasm stretches above you}. {not light:The dim lighting reveals sheer walls continuing|Sheer walls continue} to the north and south. 
     + [Walk north] You walk north.
-        -> progress_time.outside -> north_entrance
+        -> advance_time.outside -> north_entrance
     + [Walk south] You walk south.
-        -> progress_time.outside -> south_entrance
+        -> advance_time.outside -> south_entrance
 
 == south_entrance ==
     /* I decided to use if/else rather than stitches for larger light checks, just to make tunneling from == torch_use == easier on myself */
     {light:
         The ground here is uneven. To the north, it opens into a ravine. To the south, it descends into a jagged passageway.
         + [Walk north] You walk north.
-            -> progress_time.outside -> entrance
+            -> advance_time.outside -> entrance
         + [Walk south] You walk south.
-            -> enter_cave -> progress_time -> south_passage
+            -> enter_cave -> advance_time -> south_passage
     - else:
         The ground here is uneven, and not much light filters down from above. You don't think you can continue on without more light.
         + [Walk north] You walk north.
-            -> progress_time.outside -> entrance
+            -> advance_time.outside -> entrance
         + {north_entrance.torch_get and not light} [Light torch]
             -> torch_use -> south_entrance
     }
@@ -68,9 +68,9 @@ VAR time = 0
 == north_entrance ==
     {not light:Some light filters down from above.} You hear running water to the north, and the ground slopes downward to the south. {not torch_get:A torch lies on the floor.}
     + [Walk north] You walk north.
-        -> progress_time.outside -> north_river
+        -> advance_time.outside -> north_river
     + [Walk south] You walk south.
-        -> progress_time.outside -> entrance
+        -> advance_time.outside -> entrance
     * [Pick up torch]
         -> torch_get
 
@@ -81,18 +81,18 @@ VAR time = 0
 == north_river ==
     The ravine here narrows to the bottom of a waterfall. The current channels into a small tunnel to the southwest. {not light:{not east_alcove:You can't see much in the low light, but the eastern wall seems more shadowed than the rest|The eastern wall opens up into darkness}|An alcove opens to the east}.
         + [Enter the tunnel] You crawl southwest through knee-deep water{light:, careful not to extinguish your torch}.
-            -> enter_cave -> progress_time -> river_tunnel
+            -> enter_cave -> advance_time -> river_tunnel
         + [Walk south] You walk south.
-            -> progress_time.outside -> north_entrance
+            -> advance_time.outside -> north_entrance
         + {light} [Walk east] You walk east.
-            -> enter_cave -> progress_time -> east_alcove
+            -> enter_cave -> advance_time -> east_alcove
         + {not light} [{Investigate the wall|Walk east}] {You take a closer look at the eastern wall|You walk east}.
-            -> progress_time -> east_alcove
+            -> advance_time -> east_alcove
 
 == river_tunnel ==
     {Eventually, the tunnel opens up into|You stand in} a small cavern. {not light:You can't see much{not knife_get:, but something glimmers in the darkness| in the darkness}|The walls are worn smooth by the underground river}.
     + [Leave the cave] You crawl northeast against the current.
-        -> exit_cave -> progress_time.outside -> north_river
+        -> exit_cave -> advance_time.outside -> north_river
     * [Investigate] You take a closer look.
         -> knife_get
     * {north_entrance.torch_get and knife_get and not light} [Light torch] You fail to light your torch in the damp cave.
@@ -105,7 +105,7 @@ VAR time = 0
 == east_alcove ==
     {not light:{!In fact, the wall falls back into a cave; you have no idea how deep. }Very little light makes it around the corner. You stand in near-pitch darkness|You stand in a small alcove in the cliff face. Directly in front of you lies a skeleton dressed in rags{!| (poor guy)}}.
     + [Walk west] You walk west{not light:, out of the darkness}.
-        -> exit_cave -> progress_time.outside -> north_river
+        -> exit_cave -> advance_time.outside -> north_river
     + {north_entrance.torch_get and not light} [Light torch]
             -> torch_use -> east_alcove
     * {light} [Investigate]
@@ -118,7 +118,7 @@ VAR time = 0
 == south_passage ==
     {rope_throw.throw_count < 3:You find yourself at the bottom of a steep descent to the north. To the southeast lies a{not climb: steep|n} upward incline in the cave{climb:, too steep to climb}.|You stand before a wall to the southeast, your rope hanging down at arm's length. The ravine lies to the north.}
     + [Walk north] You climb out of the cave.
-        -> exit_cave -> progress_time.outside -> south_entrance
+        -> exit_cave -> advance_time.outside -> south_entrance
     * {rope_throw.throw_count < 3} [Climb the wall] You attempt to climb to the southeast.
         -> climb
     + {east_alcove.rope_get and rope_throw.throw_count < 3} [Throw the rope] You see by the light of your torch an outcropping near the top of the slope.
@@ -128,12 +128,12 @@ VAR time = 0
 
     = climb
         It proves far too steep, and you fall back down to the bottom, nearly losing your torch in the process.
-        -> progress_time -> south_passage
+        -> advance_time -> south_passage
 
 /* I can't figure out any better way to deal with this situation, as the default for alternatives (sequences) increment every time you see them, rather than every time they're selected. Since I wanted to play with the prompt message, I resorted to... this :/  */
 == rope_throw ==
     {throw_count > 3:
-        -> progress_time -> south_passage
+        -> advance_time -> south_passage
     }
     { throw_count:
         - 0:    You fashion your rope into a makeshift lasso, and prepare to throw the end at the rock.
@@ -162,12 +162,12 @@ VAR time = 0
         -> south_passage
     
     = throw_count
-        -> progress_time -> rope_throw
+        -> advance_time -> rope_throw
 
 == escape ==
     The cave here slopes up gently away from the ravine to the east. You see some light at the end of the tunnel.
     + [Climb down] You climb down to the northwest.
-        -> progress_time -> south_passage
+        -> advance_time -> south_passage
     + [Walk east] You follow the passage to the east.
         -> escape_2
     
